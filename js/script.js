@@ -1,169 +1,172 @@
-const EMAILJS_PUBLIC_KEY = "3ChXJ8Gg0rPrvLU_j";      
-const EMAILJS_SERVICE_ID = "service_aj1s41m";      
-const TEMPLATE_ID = "template_ibhhp36";
+var publicKey = "3ChXJ8Gg0rPrvLU_j";
+var serviceId = "service_aj1s41m";
+var tempId = "template_ibhhp36";
 
-(function() {
-    emailjs.init(EMAILJS_PUBLIC_KEY);
+(function () {
+  emailjs.init(publicKey);
 })();
 
-const cartBody = document.getElementById("cart-body");
-const totalElement = document.getElementById("total");
-const emptyState = document.getElementById("empty-state");
-const buttons = document.querySelectorAll(".add-btn");
-const bookingForm = document.getElementById("bookingForm");
-const bookBtn = document.getElementById("bookBtn");
-const successMessage = document.getElementById("success-message");
+var cartBody = document.getElementById("cart-body");
+var totalElement = document.getElementById("total");
+var emptyState = document.getElementById("empty-state");
+var buttons = document.getElementsByClassName("add-btn");
+var bookingForm = document.getElementById("bookingForm");
+var bookBtn = document.getElementById("bookBtn");
+var successMessage = document.getElementById("success-message");
 
-let cart = [];
+var cart = [];
 
-buttons.forEach(button => {
-    button.addEventListener("click", function () {
+for (var i = 0; i < buttons.length; i++) {
+  buttons[i].onclick = function () {
+    var serviceDiv = this.parentNode;
+    var firstSpan = serviceDiv.getElementsByTagName("span")[0];
+    var spanText = firstSpan.innerHTML;
+    var priceSpan = firstSpan.getElementsByClassName("price")[0];
+    var priceText = priceSpan.innerHTML;
+    var priceString = priceText.replace("₹", "");
+    var price = parseFloat(priceString);
+    var nameSpan = serviceDiv.getElementsByTagName("span")[0];
+    var serviceName = "";
+    var fullText = nameSpan.innerHTML;
+    var priceIndex = fullText.indexOf("₹");
 
-        const serviceDiv = this.closest(".service");
-        const name = serviceDiv.dataset.name;
-        const price = parseFloat(serviceDiv.dataset.price);
-
-        const existingIndex = cart.findIndex(item => item.name === name);
-
-        const textSpan = this.querySelector(".btn-text");
-        const iconSpan = this.querySelector(".icon-circle");
-
-        if (existingIndex === -1) {
-            cart.push({ name, price });
-
-            textSpan.textContent = "Remove Item";
-            iconSpan.textContent = "−";
-            this.classList.add("active");
-        } else {
-            cart.splice(existingIndex, 1);
-            textSpan.textContent = "Add Item";
-            iconSpan.textContent = "+";
-            this.classList.remove("active");
-        }
-        renderCart();
-    });
-});
-
-function renderCart() {
-    cartBody.innerHTML = "";
-    let total = 0;
-
-    if (cart.length === 0) {
-        emptyState.style.display = "block";
-    } else {
-        emptyState.style.display = "none";
+    if (priceIndex > 0) {
+      serviceName = fullText.substring(0, priceIndex);
+      serviceName = serviceName.trim();
     }
 
-    cart.forEach((item, index) => {
-        total += item.price;
-        cartBody.innerHTML += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${item.name}</td>
-                <td>₹${item.price.toFixed(2)}</td>
-            </tr>
-        `;
-    });
+    var found = -1;
+    for (var j = 0; j < cart.length; j++) {
+      if (cart[j].name === serviceName) {
+        found = j;
+        break;
+      }
+    }
 
-    totalElement.textContent = total.toFixed(2);
+    var textSpan = this.getElementsByClassName("btn-text")[0];
+    var iconSpan = this.getElementsByClassName("icon-circle")[0];
+
+    if (found === -1) {
+      var newItem = {
+        name: serviceName,
+        price: price,
+      };
+      cart.push(newItem);
+      textSpan.innerHTML = "Remove Item";
+      iconSpan.innerHTML = "-";
+      this.className = this.className + " active";
+    } else {
+      cart.splice(found, 1);
+      textSpan.innerHTML = "Add Item";
+      iconSpan.innerHTML = "+";
+      this.className = this.className.replace(" active", "");
+    }
+
+    renderCart();
+  };
 }
 
-bookingForm.addEventListener("submit", function (e) {
-    e.preventDefault();
+function renderCart() {
+  cartBody.innerHTML = "";
+  var total = 0;
 
-    const inputs = bookingForm.querySelectorAll("input");
+  if (cart.length === 0) {
+    emptyState.style.display = "block";
+  } else {
+    emptyState.style.display = "none";
+  }
 
-    if (cart.length === 0) {
-        successMessage.style.display = "flex";
-        successMessage.style.background = "#fdecea";
-        successMessage.style.color = "#d32f2f";
-        successMessage.innerHTML = `
-            <span class="success-icon" style="border-color:#d32f2f;color:#d32f2f;">!</span>
-            Please select at least one service
-        `;
-        setTimeout(() => {
-            successMessage.style.display = "none";
-        }, 3000);
-        return;
-    }
+  for (var i = 0; i < cart.length; i++) {
+    total = total + cart[i].price;
+    var row = "<tr>";
+    row = row + "<td>" + (i + 1) + "</td>";
+    row = row + "<td>" + cart[i].name + "</td>";
+    row = row + "<td>₹" + cart[i].price.toFixed(2) + "</td>";
+    row = row + "</tr>";
+    cartBody.innerHTML = cartBody.innerHTML + row;
+  }
+  totalElement.innerHTML = total.toFixed(2);
+}
 
-    if (!bookingForm.checkValidity()) {
-        bookingForm.reportValidity();
-        return;
-    }
+bookingForm.onsubmit = function (event) {
+  event.preventDefault();
 
-    const fullName = document.getElementById("fullName").value;
-    const email = document.getElementById("email").value;
-    const phone = document.getElementById("phone").value;
-    const totalAmount = totalElement.textContent;
+  if (cart.length === 0) {
+    successMessage.style.display = "flex";
+    successMessage.style.backgroundColor = "#fdecea";
+    successMessage.style.color = "#d32f2f";
+    successMessage.innerHTML = "Please select at least one service";
 
-    const orderDetails = cart.map((item, index) => 
-        `${index + 1}. ${item.name} - ₹${item.price.toFixed(2)}`
-    ).join("\n");
+    setTimeout(function () {
+      successMessage.style.display = "none";
+    }, 3000);
 
-    inputs.forEach(input => input.disabled = true);
-    bookBtn.disabled = true;
-    bookBtn.style.opacity = "0.6";
-    bookBtn.textContent = "Sending...";
+    return;
+  }
 
-    const templateParams = {
-        name: fullName,
-        email: email,
-        phone: phone,
-        order_details: orderDetails,
-        total_amount: `₹${totalAmount}`
-    };
+  if (!bookingForm.checkValidity()) {
+    bookingForm.reportValidity();
+    return;
+  }
 
-    Promise.all([
-        emailjs.send(EMAILJS_SERVICE_ID, TEMPLATE_ID, templateParams),
-    ])
-    .then(function() {
+  var fullName = document.getElementById("fullName").value;
+  var email = document.getElementById("email").value;
+  var phone = document.getElementById("phone").value;
+  var totalAmount = totalElement.innerHTML;
 
-        successMessage.style.display = "flex";
-        successMessage.style.background = "#e6f4ea";
-        successMessage.style.color = "#2e7d32";
-        successMessage.innerHTML = `
-            <span class="success-icon">✓</span>
-            Booking successful! Confirmation email sent.
-        `;
+  var orderDetails = "";
 
-        setTimeout(() => {
-            successMessage.style.display = "none";
-            inputs.forEach(input => input.disabled = false);
-            bookBtn.disabled = false;
-            bookBtn.style.opacity = "1";
-            bookBtn.textContent = "Book now";
-            bookingForm.reset();
-            cart = [];
-            renderCart();
+  for (var i = 0; i < cart.length; i++) {
+    orderDetails = orderDetails + (i + 1) + ". " + cart[i].name;
+    orderDetails = orderDetails + " - ₹" + cart[i].price.toFixed(2);
+    orderDetails = orderDetails + "\n";
+  }
 
-            buttons.forEach(button => {
-                button.querySelector(".btn-text").textContent = "Add Item";
-                button.querySelector(".icon-circle").textContent = "+";
-                button.classList.remove("active");
-            });
-        }, 5000);
-    })
-    .catch(function(error) {
-        console.error("Email sending failed:", error);
+  bookBtn.disabled = true;
+  bookBtn.innerHTML = "Sending...";
 
-        successMessage.style.display = "flex";
-        successMessage.style.background = "#fdecea";
-        successMessage.style.color = "#d32f2f";
-        successMessage.innerHTML = `
-            <span class="success-icon" style="border-color:#d32f2f;color:#d32f2f;">!</span>
-            Failed to send email. Please try again.
-        `;
+  var templateParams = {
+    name: fullName,
+    email: email,
+    phone: phone,
+    order_details: orderDetails,
+    total_amount: "₹" + totalAmount,
+  };
 
-        inputs.forEach(input => input.disabled = false);
+  emailjs
+    .send(serviceId, tempId, templateParams)
+    .then(function () {
+      successMessage.style.display = "flex";
+      successMessage.style.backgroundColor = "#e6f4ea";
+      successMessage.style.color = "#2e7d32";
+      successMessage.innerHTML = "Booking successful! Confirmation email sent.";
+
+      setTimeout(function () {
+        successMessage.style.display = "none";
+        bookingForm.reset();
+        cart = [];
+        renderCart();
+
+        for (var i = 0; i < buttons.length; i++) {
+          var btnText = buttons[i].getElementsByClassName("btn-text")[0];
+          var btnIcon = buttons[i].getElementsByClassName("icon-circle")[0];
+          btnText.innerHTML = "Add Item";
+          btnIcon.innerHTML = "+";
+          buttons[i].className = buttons[i].className.replace(" active", "");
+        }
+
         bookBtn.disabled = false;
-        bookBtn.style.opacity = "1";
-        bookBtn.textContent = "Book now";
-
-        setTimeout(() => {
-            successMessage.style.display = "none";
-        }, 3000);
+        bookBtn.innerHTML = "Book now";
+      }, 4000);
+    })
+    .catch(function () {
+      successMessage.style.display = "flex";
+      successMessage.style.backgroundColor = "#fdecea";
+      successMessage.style.color = "#d32f2f";
+      successMessage.innerHTML = "Failed to send email. Please try again.";
+      bookBtn.disabled = false;
+      bookBtn.innerHTML = "Book now";
     });
-});
+};
 
 renderCart();
